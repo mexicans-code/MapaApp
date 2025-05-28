@@ -48,17 +48,17 @@ function CustomDrawerContent(props) {
       <DrawerItem
         label="Edificio"
         icon={({ size, color }) => <Iconos.Edificio size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Filtro'); props.navigation.closeDrawer(); }}
+        onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
       />
       <DrawerItem
         label="Área"
         icon={({ size, color }) => <Iconos.Area size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Filtro'); props.navigation.closeDrawer(); }}
+        onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
       />
       <DrawerItem
         label="Personal"
         icon={({ size, color }) => <Iconos.Personal size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Filtro'); props.navigation.closeDrawer(); }}
+        onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
       />
 
       {/* Línea divisoria y título: Tú */}

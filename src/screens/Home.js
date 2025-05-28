@@ -1,48 +1,58 @@
-import React from 'react';
-import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import {
+    Alert,
+    Dimensions,
+    FlatList,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View
+} from 'react-native';
 import Colores from '../assets/colors';
 import images from '../assets/img/images';
 import Buscador from './components/Buscador';
 
 const screenWidth = Dimensions.get('window').width;
 
-const moreVisited = [
-  { key: 'cafeteria', label: 'Cafetería', img: images.imagen },
-  { key: 'auditorio', label: 'Auditorio', img: images.imagen },
-  { key: 'canchas', label: 'Canchas', img: images.imagen },
-  { key: 'biblioteca', label: 'Biblioteca', img: images.imagen },
-  { key: 'laboratorio', label: 'Laboratorio', img: images.imagen },
-];
-
-const eventsByDate = {
-  '2025-05-21': [
-    {
-      id: 'e1',
-      title: 'Conferencia sobre tecnología',
-      time: '10:00 AM',
-      location: 'Auditorio',
-      img: images.imagen,
-    },
-    {
-      id: 'e2',
-      title: 'Taller de robótica',
-      time: '2:00 PM',
-      location: 'Laboratorio',
-      img: images.imagen,
-    },
-  ],
-  '2025-05-22': [
-    {
-      id: 'e3',
-      title: 'Torneo de fútbol',
-      time: '4:00 PM',
-      location: 'Canchas deportivas',
-      img: images.imagen,
-    },
-  ],
-};
 
 export default function Home() {
+  const [events, setEvents] = useState([]);
+  const [moreVisited, setMoreVisited] = useState([]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await axios.get('http://10.13.9.76:3000/events');
+        setEvents(response.data);
+        console.log('Events:', response.data);
+      } catch (error) {
+        console.error('Error al obtener eventos:', error);
+        Alert.alert('Error', 'No se pudo cargar la lista de eventos');
+      }
+    };
+
+    const fetchMoreVisited = async () => {
+      try {
+        const response = await axios.get('http://10.13.9.76:3000/most-visited');
+        const transformedData = response.data.map((item) => ({
+          key: item.id?.toString() || item._id?.toString() || item.nombre?.toLowerCase(),
+          label: item.nombre,
+          img: item.imagen ? { uri: item.imagen } : images.imagen
+        }));
+        setMoreVisited(transformedData);
+        console.log('More Visited:', transformedData);
+      } catch (error) {
+        console.error('Error al obtener mas visitados:', error);
+        Alert.alert('Error', 'No se pudo cargar la lista de mas visitados');
+      }
+    };
+
+    fetchEvents();
+    fetchMoreVisited();
+  }, []);
+
   const renderVisitedItem = ({ item }) => (
     <View style={styles.visitedItem}>
       <Image source={item.img} style={styles.visitedImage} />
@@ -64,9 +74,9 @@ export default function Home() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <Text style={styles.sectionTitle}>A donde quieres ir?</Text>
       <Buscador 
-        placeholder="Buscar" 
-        onChangeText={handleSearchChange} 
-        onPressFiltro={handlePressFiltro} 
+        placeholder="Buscar"
+        onChangeText={handleSearchChange}
+        onPressFiltro={handlePressFiltro}
       />
 
       <Text style={styles.sectionTitle}>Más visitados</Text>
@@ -80,21 +90,37 @@ export default function Home() {
       />
 
       <Text style={styles.sectionTitle}>Eventos</Text>
-      {Object.entries(eventsByDate).map(([date, events]) => (
-        <View key={date} style={styles.eventDateSection}>
-          <Text style={styles.eventDate}>{new Date(date).toLocaleDateString()}</Text>
-          {events.map((event) => (
-            <View key={event.id} style={styles.eventItem}>
+      {events.map((event) => {
+        const eventDate = new Date(event.fecha);
+        const formattedDate = eventDate.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        const formattedTime = eventDate.toLocaleTimeString('es-ES', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+
+        return (
+          <View key={event.id || event._id} style={styles.eventDateSection}>
+            <Text style={styles.eventDate}>{formattedDate}</Text>
+            <View style={styles.eventItem}>
               <View style={styles.eventInfo}>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                <Text style={styles.eventDetail}>{event.time}</Text>
-                <Text style={styles.eventDetail}>{event.location}</Text>
+                <Text style={styles.eventTitle}>{event.nombre}</Text>
+                <Text style={styles.eventDetail}>📅 {formattedDate}</Text>
+                <Text style={styles.eventDetail}>🕐 {formattedTime}</Text>
+                <Text style={styles.eventDetail}>📍 {event.lugar}</Text>
               </View>
-              <Image source={event.img} style={styles.eventImage} />
+              <Image 
+                source={{uri: event.imagen}} 
+                style={styles.eventImage} 
+              />
             </View>
-          ))}
-        </View>
-      ))}
+          </View>
+        );
+      })}
     </ScrollView>
   );
 }

@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Animatable from 'react-native-animatable';
+import colors from '../assets/colors';
 import images from '../assets/img/images';
 import Boton from './components/CustomButtons';
-import colors from '../assets/colors'; 
 
 export default function Welcome({ navigation }) {
   return (

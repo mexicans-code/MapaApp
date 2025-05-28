@@ -1,22 +1,23 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
-  Animated,
-  Dimensions,
-  FlatList,
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Animated,
+    Dimensions,
+    FlatList,
+    Modal,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 
@@ -29,48 +30,6 @@ const center = {
   latitudeDelta: 0.0001,
   longitudeDelta: 0.0001
 };
-
-// Lista de destinos con sus coordenadas
-const destinos = [
-  { id: "1", nombre: "Caseta de Control 1: Acceso Principal", posicion: { latitude: 20.65323, longitude: -100.40403 } },
-  { id: "2", nombre: "Caseta de Control 2: Acceso a Estacionamiento 2", posicion: { latitude: 20.65351, longitude: -100.40610 } },
-  { id: "3", nombre: "Caseta de Control 3: Acceso a Estacionamiento 3 y 4", posicion: { latitude: 20.65367, longitude: -100.40721 } },
-  { id: "4", nombre: "Caseta de Control 4: Acceso a Centro de Formación PEUGEOT", posicion: { latitude: 20.65632, longitude: -100.40320 } },
-  { id: "5", nombre: "Caseta de Control 5: Acceso a Centro de Creatividad e Innovación 4.0", posicion: { latitude: 20.65693, longitude: -100.40308 } },
-  { id: "6", nombre: "Gimnacio - Auditorio y Departamento de Actividades Deportivas y Culturales", posicion: { latitude: 20.65577, longitude: -100.40592 } },
-  { id: "7", nombre: "Almacen General y taller de mantenimiento", posicion: { latitude: 20.65610, longitude: -100.40386 } },
-  { id: "8", nombre: "Cafetería UTEQ", posicion: { latitude: 20.65479, longitude: -100.40513 } },
-  { id: "9", nombre: "Biblioteca UTEQ", posicion: { latitude: 20.65485, longitude: -100.40379 } },
-  { id: "10", nombre: "Cancha de usos múltiples", posicion: { latitude: 20.65646, longitude: -100.40551 } },
-  { id: "11", nombre: "Cancha de Fútbol Rápido", posicion: { latitude: 20.65684, longitude: -100.40549 } },
-  { id: "12", nombre: "Cancha de Fútbol UTEQ", posicion: { latitude: 20.65722, longitude: -100.40532 } },
-  { id: "13", nombre: "Centro de Formación PEUGEOT", posicion: { latitude: 20.65642, longitude: -100.40358 } },
-  { id: "14", nombre: "Centro Cultural Comunitario Epigmenio González", posicion: { latitude: 20.65841, longitude: -100.40521 } },
-  { id: "15", nombre: "Centro de Productividad e innovación para la industria 4.0 (CEPRODI 4.0)", posicion: { latitude: 20.65727, longitude: -100.40345 } },
-  { id: "16", nombre: "Creativity and Inovation Center 4.0", posicion: { latitude: 20.65750, longitude: -100.40346 } },
-  { id: "17", nombre: "Posgrado, Innovación, Desarrollo y Emprendimiento Tecnológico (PIDET)", posicion: { latitude: 20.65787, longitude: -100.40350 } },
-  { id: "18", nombre: "División Industrial", posicion: { latitude: 20.65450, longitude: -100.40414 } },
-  { id: "19", nombre: "División Económica-Administrativa", posicion: { latitude: 20.65381, longitude: -100.40518 } },
-  { id: "20", nombre: "División Tecnologias de Automatización e información", posicion: { latitude: 20.65434, longitude: -100.40463 } },
-  { id: "21", nombre: "División de Tecnología Ambiental", posicion: { latitude: 20.65534, longitude: -100.40461 } },
-  { id: "22", nombre: "División Desarrollo de Negocios", posicion: { latitude: 20.65561, longitude: -100.40389 } },
-  { id: "23", nombre: "División Nanotecnología", posicion: { latitude: 20.65586, longitude: -100.40488 } },
-  { id: "24", nombre: "División Idiomas", posicion: { latitude: 20.65505, longitude: -100.40629 } },
-  { id: "25", nombre: "Servicio Médico", posicion: { latitude: 20.65523, longitude: -100.40518 } },
-  { id: "26", nombre: "Laboratorio de Mantenimiento Industrial", posicion: { latitude: 20.65392, longitude: -100.40391 } },
-  { id: "27", nombre: "Laboratorio de Procesos Industriales", posicion: { latitude: 20.65397, longitude: -100.40452 } },
-  { id: "28", nombre: "Laboratorio de Sistemas Informáticos", posicion: { latitude: 20.65492, longitude: -100.40443 } },
-  { id: "29", nombre: "Laboratorio de Mecatrónica y TICS", posicion: { latitude: 20.65520, longitude: -100.40547 } },
-  { id: "30", nombre: "Módulo Sanitario 1", posicion: { latitude: 20.65414, longitude: -100.40418 } },
-  { id: "31", nombre: "Plaza Cívica", posicion: { latitude: 20.65430, longitude: -100.40616 } },
-  { id: "32", nombre: "Módulo Sanitario 2", posicion: { latitude: 20.65622, longitude: -100.40419 } },
-  { id: "33", nombre: "Estacionamiento 1 para Docentes y Administrativos", posicion: { latitude: 20.65337, longitude: -100.40434 } },
-  { id: "34", nombre: "Estacionamiento 2 para Docentes y Administrativos", posicion: { latitude: 20.65359, longitude: -100.40595 } },
-  { id: "35", nombre: "Estacionamiento 3 para Todo Público", posicion: { latitude: 20.65405, longitude: -100.40688 } },
-  { id: "36", nombre: "Estacionamiento 4 para Actividades en Gimnasio-Auditorio", posicion: { latitude: 20.65574, longitude: -100.40655 } },
-  { id: "37", nombre: "Edificio de Rectoria", posicion: { latitude: 20.65435, longitude: -100.40544 } },
-  { id: "38", nombre: "Vinculación Escolar", posicion: { latitude: 20.65410, longitude: -100.40610 } },
-];
 
 export default function Map() {
   const [destino, setDestino] = useState(null);
@@ -86,8 +45,89 @@ export default function Map() {
   const [mapType, setMapType] = useState('standard');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [searchAnimation] = useState(new Animated.Value(0));
+  const [destinos, setDestinos] = useState([]);
+
 
   const mapRef = useRef(null);
+
+  // Función para guardar en historial
+  const guardarEnHistorial = async (destinoData) => {
+    try {
+      const fechaActual = new Date();
+      const historialItem = {
+        nombre: destinoData.nombre,
+        tipo: determinarTipoDestino(destinoData.nombre),
+        dia: fechaActual.toLocaleDateString('es-ES'),
+        hora: fechaActual.toLocaleTimeString('es-ES', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        fechaCompleta: fechaActual.toISOString(),
+        coordenadas: destinoData.posicion,
+        userId: await AsyncStorage.getItem('id_user')
+      };
+
+      const response = await axios.post('http://10.13.9.76:3008/api/historial', historialItem);
+
+      if (response.data.success) {
+        console.log('Destino guardado en historial exitosamente');
+      }
+    } catch (error) {
+      console.error('Error al guardar en historial:', error);
+    }
+  };
+
+  // Función para determinar el tipo de destino basado en el nombre
+  const determinarTipoDestino = (nombre) => {
+    const nombreLower = nombre.toLowerCase();
+
+    if (nombreLower.includes('aula') ||
+      nombreLower.includes('salón') ||
+      nombreLower.includes('salon') ||
+      nombreLower.includes('laboratorio') ||
+      nombreLower.includes('lab') ||
+      nombreLower.includes('edificio') ||
+      nombreLower.includes('centro de cómputo')) {
+      return 'aula';
+    }
+
+    if (nombreLower.includes('área verde') ||
+      nombreLower.includes('area verde') ||
+      nombreLower.includes('jardín') ||
+      nombreLower.includes('jardin') ||
+      nombreLower.includes('patio') ||
+      nombreLower.includes('cancha') ||
+      nombreLower.includes('explanada')) {
+      return 'verde';
+    }
+
+    if (nombreLower.includes('director') ||
+      nombreLower.includes('coordinador') ||
+      nombreLower.includes('secretaria') ||
+      nombreLower.includes('oficina') ||
+      nombreLower.includes('despacho') ||
+      nombreLower.includes('personal')) {
+      return 'persona';
+    }
+
+    return 'aula'; // default
+  };
+
+
+
+  useEffect(() => {
+    const fetchDestinos = async () => {
+      try {
+        const response = await axios.get('http://10.13.9.76:3000/destinos');
+        setDestinos(response.data);
+      } catch (error) {
+        console.error('Error al obtener destinos:', error);
+        Alert.alert('Error', 'No se pudo cargar la lista de destinos');
+      }
+    };
+
+    fetchDestinos();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -166,15 +206,15 @@ export default function Map() {
   // Función para calcular distancia entre dos puntos
   const calcularDistancia = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Radio de la Tierra en metros
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
 
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
   };
@@ -262,7 +302,7 @@ export default function Map() {
       'roundabout-left': 'roundabout-left',
       'roundabout-right': 'roundabout-right'
     };
-    
+
     return iconos[maniobra] || 'navigation';
   };
 
@@ -277,11 +317,11 @@ export default function Map() {
       if (response.data.routes.length) {
         const route = response.data.routes[0];
         const leg = route.legs[0];
-        
+
         const points = decodePolyline(route.overview_polyline.points);
         setRutas(points);
         setDirections({ status: 'OK' });
-        
+
         // Guardar información de la ruta
         setRutaInfo({
           distancia: leg.distance.text,
@@ -289,10 +329,12 @@ export default function Map() {
           distanciaValor: leg.distance.value,
           duracionValor: leg.duration.value
         });
-        
+
         // Guardar pasos de navegación
         setPasos(leg.steps);
         setPasoActual(0);
+
+
 
         if (mapRef.current) {
           mapRef.current.fitToCoordinates([origenCoords, ...points, destinoCoords], {
@@ -329,14 +371,14 @@ export default function Map() {
 
   const centerToUserLocation = async () => {
     if (!locationPermissionGranted) return;
-    
+
     try {
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High
       });
-      
+
       const { latitude, longitude } = location.coords;
-      
+
       if (mapRef.current) {
         mapRef.current.animateToRegion({
           latitude,
@@ -361,10 +403,15 @@ export default function Map() {
     setMostrarIndicaciones(false);
   };
 
-  const iniciarNavegacion = () => {
+  const iniciarNavegacion = async () => {
     if (pasos.length > 0) {
       setNavegacionActiva(true);
       setMostrarIndicaciones(true);
+
+      // Guardar en historial cuando se inicia la navegación
+      if (destino) {
+        await guardarEnHistorial(destino);
+      }
     }
   };
 
@@ -377,7 +424,7 @@ export default function Map() {
   const toggleSearchExpanded = () => {
     const toValue = searchExpanded ? 0 : 1;
     setSearchExpanded(!searchExpanded);
-    
+
     Animated.timing(searchAnimation, {
       toValue,
       duration: 300,
@@ -387,16 +434,10 @@ export default function Map() {
 
   const getMarkerColor = (id) => {
     const colorMap = {
-      "1": "#f0e334", "2": "#f0e334", "3": "#f0e334", "4": "#f0e334", "5": "#f0e334",
-      "6": "#FF5722", "7": "#9C27B0", "8": "#FF9800", "9": "#4CAF50", "10": "#2196F3",
-      "11": "#2196F3", "12": "#2196F3", "13": "#FF5722", "14": "#9C27B0", "15": "#673AB7",
-      "16": "#673AB7", "17": "#673AB7", "18": "#795548", "19": "#795548", "20": "#795548",
-      "21": "#4CAF50", "22": "#795548", "23": "#9C27B0", "24": "#FF9800", "25": "#F44336",
-      "26": "#607D8B", "27": "#607D8B", "28": "#607D8B", "29": "#607D8B", "30": "#757575",
-      "31": "#8BC34A", "32": "#757575", "33": "#FFC107", "34": "#FFC107", "35": "#FFC107",
-      "36": "#FFC107", "37": "#3F51B5", "38": "#E91E63"
     };
-    return colorMap[id] || "#607D8B";
+    return colorMap[id] || 
+      `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+
   };
 
   const Buscador = ({ onSelect }) => {
@@ -420,7 +461,7 @@ export default function Map() {
 
     return (
       <View style={styles.searchContainer}>
-        <Animated.View 
+        <Animated.View
           style={[
             styles.searchInputContainer,
             {
@@ -434,7 +475,7 @@ export default function Map() {
           <TouchableOpacity onPress={toggleSearchExpanded} style={styles.menuButton}>
             <MaterialIcons name="menu" size={24} color="#5f6368" />
           </TouchableOpacity>
-          
+
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar en UTEQ"
@@ -446,7 +487,7 @@ export default function Map() {
               if (!searchExpanded) toggleSearchExpanded();
             }}
           />
-          
+
           {searchQuery.length > 0 && (
             <TouchableOpacity
               onPress={() => {
@@ -502,7 +543,7 @@ export default function Map() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      
+
       {/* Mapa de fondo */}
       <MapView
         ref={mapRef}
@@ -551,17 +592,18 @@ export default function Map() {
 
       {/* Panel de búsqueda flotante */}
       <SafeAreaView style={styles.topContainer}>
-        <Buscador onSelect={setDestino} />
+        <Buscador onSelect={setDestino} destinos={destinos} />
+
       </SafeAreaView>
 
       {/* Indicación actual de navegación */}
       {navegacionActiva && pasos.length > 0 && pasoActual < pasos.length && (
         <View style={styles.navigationBanner}>
           <View style={styles.navigationIcon}>
-            <MaterialIcons 
-              name={obtenerIconoManiobra(pasos[pasoActual].maneuver)} 
-              size={32} 
-              color="#4285F4" 
+            <MaterialIcons
+              name={obtenerIconoManiobra(pasos[pasoActual].maneuver)}
+              size={32}
+              color="#4285F4"
             />
           </View>
           <View style={styles.navigationText}>
@@ -572,7 +614,7 @@ export default function Map() {
               En {pasos[pasoActual].distance.text}
             </Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setMostrarIndicaciones(true)}
             style={styles.navigationDetailsButton}
           >
@@ -590,7 +632,7 @@ export default function Map() {
             color="#5f6368"
           />
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.floatingButton} onPress={centerToUserLocation}>
           <MaterialIcons name="my-location" size={24} color="#4285F4" />
         </TouchableOpacity>
@@ -620,11 +662,11 @@ export default function Map() {
                 )}
               </View>
             </View>
-            
+
             <View style={styles.actionButtons}>
               {!navegacionActiva ? (
-                <TouchableOpacity 
-                  style={styles.navigationButton} 
+                <TouchableOpacity
+                  style={styles.navigationButton}
                   onPress={iniciarNavegacion}
                   disabled={!pasos.length}
                 >
@@ -632,15 +674,15 @@ export default function Map() {
                   <Text style={styles.navigationButtonText}>Iniciar</Text>
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity 
-                  style={styles.stopButton} 
+                <TouchableOpacity
+                  style={styles.stopButton}
                   onPress={detenerNavegacion}
                 >
                   <MaterialIcons name="stop" size={24} color="white" />
                   <Text style={styles.stopButtonText}>Detener</Text>
                 </TouchableOpacity>
               )}
-              
+
               <TouchableOpacity style={styles.closeButton} onPress={clearRoute}>
                 <MaterialIcons name="close" size={24} color="#5f6368" />
               </TouchableOpacity>
@@ -660,14 +702,14 @@ export default function Map() {
           <View style={styles.directionsModal}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Indicaciones</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setMostrarIndicaciones(false)}
                 style={styles.modalCloseButton}
               >
                 <MaterialIcons name="close" size={24} color="#5f6368" />
               </TouchableOpacity>
             </View>
-            
+
             {rutaInfo && (
               <View style={styles.routeSummary}>
                 <Text style={styles.routeSummaryText}>
@@ -675,21 +717,21 @@ export default function Map() {
                 </Text>
               </View>
             )}
-            
+
             <ScrollView style={styles.stepsList} showsVerticalScrollIndicator={false}>
               {pasos.map((paso, index) => (
-                <View 
-                  key={index} 
+                <View
+                  key={index}
                   style={[
                     styles.stepItem,
                     index === pasoActual && navegacionActiva && styles.activeStep
                   ]}
                 >
                   <View style={styles.stepIcon}>
-                    <MaterialIcons 
-                      name={obtenerIconoManiobra(paso.maneuver)} 
-                      size={24} 
-                      color={index === pasoActual && navegacionActiva ? "#4285F4" : "#5f6368"} 
+                    <MaterialIcons
+                      name={obtenerIconoManiobra(paso.maneuver)}
+                      size={24}
+                      color={index === pasoActual && navegacionActiva ? "#4285F4" : "#5f6368"}
                     />
                   </View>
                   <View style={styles.stepContent}>

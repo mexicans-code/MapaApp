@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import {View, Text, TextInput, TouchableOpacity, StyleSheet} from 'react-native';
-import ModalGeneral from '../../modals/ModalGeneral';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import images from '../../assets/img/images';
 import { modalesContenido } from '../../modals/ContenidoModal';
+import ModalGeneral from '../../modals/ModalGeneral';
 import Boton from '../components/CustomButtons';
 
-export default function Register ({ navigation }) {
+export default function Register({ navigation }) {
   const [nombre, setNombre] = useState('');
   const [usuario, setUsuario] = useState('');
   const [contraseña, setContraseña] = useState('');
   const [confirmarContraseña, setConfirmarContraseña] = useState('');
-
+  const [origen, setOrigen] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTipo, setModalTipo] = useState('');
 
@@ -19,19 +21,44 @@ export default function Register ({ navigation }) {
     }
   }, [modalTipo]);
 
-  const registrar = () => {
-    if (!nombre || !usuario || !contraseña || !confirmarContraseña) {
+  const registrar = async () => {
+    if (!nombre || !usuario || !contraseña || !confirmarContraseña || !origen) {
       setModalTipo('errorCamposVacios');
       return;
     }
-
+  
     if (contraseña !== confirmarContraseña) {
       setModalTipo('errorContraseñaNoCoincide');
       return;
     }
-
-    // Aquí iría la lógica real de Register 
-    setModalTipo('Register Exitoso');
+  
+    try {
+      console.log('Enviando registro con datos:', { nombre, usuario, contraseña, confirmarContraseña, origen });
+      
+      const response = await axios.post('http://10.13.9.76:3005/api/register', {
+        nombre,
+        usuario,
+        contraseña,
+        origen,
+      });
+      
+      console.log('Respuesta completa:', response);
+      console.log('Status:', response.status);
+      console.log('Data:', response.data);
+  
+      if (response.data.success) {
+        console.log('Usuario registrado exitosamente');
+        setModalTipo('RegisterExitoso');
+      } else {
+        console.error('Error al registrar usuario:', response.data.message);
+        setModalTipo('RegisterError');
+      }
+    } catch (error) {
+      console.error('Error completo:', error);
+      console.error('Response error:', error.response?.data);
+      console.error('Status error:', error.response?.status);
+      setModalTipo('RegisterError');
+    }
   };
 
   const handleModalClose = () => {
@@ -43,8 +70,10 @@ export default function Register ({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Image source={images.logo} style={styles.logo} resizeMode="contain" />
+
+      <Text style={styles.title}>Crear Cuenta</Text>
 
       <TextInput
         style={styles.input}
@@ -57,6 +86,12 @@ export default function Register ({ navigation }) {
         placeholder="Usuario"
         value={usuario}
         onChangeText={setUsuario}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Origen/Lugar"
+        value={origen}
+        onChangeText={setOrigen}
       />
       <TextInput
         style={styles.input}
@@ -77,11 +112,10 @@ export default function Register ({ navigation }) {
         <Boton.BotonAzulOscuroPequeno texto="Registrar" onPress={registrar} />
       </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')} style={{ marginTop: 20 }}>
-        <Text style={styles.loginText}>¿Ya tienes cuenta? Inicia sesión</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
       </TouchableOpacity>
 
-      {/* Modal General */}
       <ModalGeneral
         visible={modalVisible}
         onClose={handleModalClose}
@@ -89,32 +123,47 @@ export default function Register ({ navigation }) {
         title={modalesContenido[modalTipo]?.title}
         message={modalesContenido[modalTipo]?.message}
       />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
-  title: {
-    fontSize: 24,
+  container: {
+    padding: 20,
+    backgroundColor: '#f5f7fa',
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 150,
+    height: 150,
     marginBottom: 20,
-    textAlign: 'center',
+  },
+  title: {
+    fontSize: 26,
     fontWeight: 'bold',
+    marginBottom: 30,
+    color: '#333',
   },
   input: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    borderColor: '#ddd',
     borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
+    width: '100%',
+    elevation: 2,
   },
-   buttonContainer: {
+  buttonContainer: {
+    marginTop: 10,
     marginBottom: 20,
+    width: '100%',
   },
-  loginText: {
-    textAlign: 'center',
+  linkText: {
     color: '#007bff',
-    textDecorationLine: 'underline',
     fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });

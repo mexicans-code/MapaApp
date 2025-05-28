@@ -1,16 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import images from '../assets/img/images';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
 import colors from '../assets/colors';
-import CustomButtons from './components/CustomButtons';
 import { Iconos } from '../assets/iconos';
+import images from '../assets/img/images';
+import CustomButtons from './components/CustomButtons';
 
 export default function Perfil({ navigation }) {
   const [editando, setEditando] = useState(false);
 
-  const [nombre, setNombre] = useState('Juan Pérez');
-  const [usuario, setUsuario] = useState('juanp');
-  const [origen, setOrigen] = useState('Ciudad de México');
+  const [nombre, setNombre] = useState('');
+  const [usuario, setUsuario] = useState('');
+  const [origen, setOrigen] = useState('');
+
+  useEffect(() => {
+    const obtenerUsuario = async () => {
+      try {
+        const idUsuario = await AsyncStorage.getItem('id_user');
+        if (!idUsuario) {
+          console.warn('No se encontró id_user en AsyncStorage');
+          return;
+        }
+
+        const response = await axios.get(`http://10.13.9.76:3000/users/${idUsuario}`);
+        const usuarioRecibido = response.data.user;
+
+        setNombre(usuarioRecibido.nombre);
+        setUsuario(usuarioRecibido.usuario);
+        setOrigen(usuarioRecibido.origen || '');
+        console.log('Usuario cargado:', usuarioRecibido);
+      } catch (error) {
+        console.error('Error al obtener usuario:', error);
+      }
+    };
+
+    obtenerUsuario();
+  }, []);
+
+  const handleCerrarSesion = () => {
+    AsyncStorage.removeItem('id_user');
+    navigation.replace('Welcome');
+  };
 
   const handleEditarFoto = () => {
     console.log('Editar foto');
@@ -18,8 +50,8 @@ export default function Perfil({ navigation }) {
 
   const handleEditarDatos = () => {
     if (editando) {
-      // Aquí puedes guardar los datos en tu backend si lo deseas
       console.log('Datos guardados:', { nombre, usuario, origen });
+      // Aquí puedes agregar la lógica para enviar los cambios al servidor si lo deseas
     }
     setEditando(!editando);
   };
@@ -72,8 +104,8 @@ export default function Perfil({ navigation }) {
 
       <CustomButtons.BotonRojoOscuro
         texto="Cerrar sesión"
-        onPress={() => navigation.replace('Welcome')}
-        style={{ marginTop: 0 }}
+        onPress={handleCerrarSesion}
+        style={{ marginTop: 0 }}  
       />
     </View>
   );
