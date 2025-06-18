@@ -13,7 +13,9 @@ import Filtro from './src/screens/Filtro';
 import Historial from './src/screens/Historial';
 import Home from './src/screens/Home';
 import Map from './src/screens/Map';
+import Mapa2Mejorado from './src/screens/Mapa2Mejorado';
 import Perfil from './src/screens/Perfil';
+
 
 import { Iconos } from './src/assets/iconos';
 
@@ -34,6 +36,11 @@ function CustomDrawerContent(props) {
         label="Map"
         icon={({ size, color }) => <Iconos.Map  size={size} color={color} />}
         onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
+      />
+      <DrawerItem
+        label="Map2Mejorado"
+        icon={({ size, color }) => <Iconos.Map size={size} color={color} />}
+        onPress={() => { props.navigation.navigate('Map2Mejorado'); props.navigation.closeDrawer(); }}
       />
       <DrawerItem
         label="Historial"
@@ -59,6 +66,12 @@ function CustomDrawerContent(props) {
         label="Personal"
         icon={({ size, color }) => <Iconos.Personal size={size} color={color} />}
         onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
+      />
+
+      <DrawerItem
+        label="Map2Mejorado"
+        icon={({ size, color }) => <Iconos.Map size={size} color={color} />}
+        onPress={() => { props.navigation.navigate('Map2Mejorado'); props.navigation.closeDrawer(); }}
       />
 
       {/* Línea divisoria y título: Tú */}
@@ -95,6 +108,9 @@ function DrawerNavigator() {
       <Drawer.Screen name="Historial" component={Historial} />
       <Drawer.Screen name="Filtro" component={Filtro} />
       <Drawer.Screen name="Perfil" component={Perfil} />
+      <Drawer.Screen name="Map2Mejorado" component={Mapa2Mejorado} />
+      <Drawer.Screen name="Register" component={Register} />
+      <Drawer.Screen name="Login" component={Login} />
     </Drawer.Navigator>
   );
 }

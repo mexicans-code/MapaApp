@@ -1,17 +1,18 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    FlatList,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import Colores from '../assets/colors';
 import images from '../assets/img/images';
+import { ip_school } from '../constants/ip';
 import Buscador from './components/Buscador';
 
 const screenWidth = Dimensions.get('window').width;
@@ -24,7 +25,7 @@ export default function Home() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('http://10.13.9.76:3000/events');
+        const response = await axios.get(`http://${ip_school}:3000/events`);
         setEvents(response.data);
         console.log('Events:', response.data);
       } catch (error) {
@@ -35,7 +36,7 @@ export default function Home() {
 
     const fetchMoreVisited = async () => {
       try {
-        const response = await axios.get('http://10.13.9.76:3000/most-visited');
+        const response = await axios.get(`http://${ip_school}:3000/most-visited`);
         const transformedData = response.data.map((item) => ({
           key: item.id?.toString() || item._id?.toString() || item.nombre?.toLowerCase(),
           label: item.nombre,

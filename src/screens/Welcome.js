@@ -25,21 +25,21 @@ export default function Welcome({ navigation }) {
       />
 
       <Animatable.View animation="fadeInUp" delay={1300} style={styles.buttonContainer}>
-        <Boton.BotonBlanco texto="Explorar sin cuenta" onPress={() => navigation.replace('Drawer')} />
+        <Boton.BotonBlanco texto="Iniciar sin cuenta" onPress={() => navigation.replace('Drawer')} />
       </Animatable.View>
 
       <Animatable.View animation="fadeInUp" delay={1800}>
         <View style={styles.row}>
           <Text style={styles.textWhite}>¿Ya tienes cuenta? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.link}>Iniciar sesión</Text>
+            <Text style={styles.link}>Iniciar sesion</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.row}>
           <Text style={styles.textWhite}>¿No tienes cuenta? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.link}>Regístrate</Text>
+            <Text style={styles.link}>Registrate</Text>
           </TouchableOpacity>
         </View>
       </Animatable.View>

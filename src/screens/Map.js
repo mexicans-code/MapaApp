@@ -4,25 +4,27 @@ import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    Animated,
-    Dimensions,
-    FlatList,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Animated,
+  Dimensions,
+  FlatList,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { ip_home } from '../constants/ip';
+
 
 const { width, height } = Dimensions.get('window');
-const GOOGLE_MAPS_API_KEY = "AIzaSyAxRJvD9X6Qq-WPn2yMrOjsE5lALwMpxyg";
+const GOOGLE_MAPS_API_KEY = "AIzaSyCqvSzatNc9OiOYk6HL-GbThk0GI-rP2Oc";
 
 const center = {
   latitude: 20.6547,
@@ -67,7 +69,7 @@ export default function Map() {
         userId: await AsyncStorage.getItem('id_user')
       };
 
-      const response = await axios.post('http://10.13.9.76:3008/api/historial', historialItem);
+      const response = await axios.post(`${ip_home}:3008/api/historial`, historialItem);
 
       if (response.data.success) {
         console.log('Destino guardado en historial exitosamente');
@@ -118,7 +120,7 @@ export default function Map() {
   useEffect(() => {
     const fetchDestinos = async () => {
       try {
-        const response = await axios.get('http://10.13.9.76:3000/destinos');
+        const response = await axios.get(`http://${ip_school}:3000/destinos`);
         setDestinos(response.data);
       } catch (error) {
         console.error('Error al obtener destinos:', error);
@@ -181,7 +183,7 @@ export default function Map() {
           },
           (ubicacion) => {
             const { latitude, longitude } = ubicacion.coords;
-            setOrigen({ latitude, longitude });
+            setOrigen({ latitude, longitude }); 
 
             if (destino && navegacionActiva) {
               calcularRuta({ latitude, longitude }, destino.posicion);
@@ -308,50 +310,251 @@ export default function Map() {
 
   const calcularRuta = async (origenCoords, destinoCoords) => {
     if (!origenCoords || !destinoCoords) return;
-
+  
     try {
+      // Validar coordenadas de entrada
+      if (!origenCoords.latitude || !origenCoords.longitude || 
+          !destinoCoords.latitude || !destinoCoords.longitude) {
+        throw new Error('Coordenadas inválidas');
+      }
+  
+      // Configuración mejorada para mayor precisión
+      const params = new URLSearchParams({
+        origin: `${origenCoords.latitude},${origenCoords.longitude}`,
+        destination: `${destinoCoords.latitude},${destinoCoords.longitude}`,
+        key: GOOGLE_MAPS_API_KEY,
+        language: 'es',
+        // Parámetros para mejorar precisión
+        alternatives: 'true',              // Obtener rutas alternativas
+        optimize: 'true',                  // Optimizar waypoints si los hay
+        avoid: '',                         // Puedes agregar 'tolls', 'highways', 'ferries'
+        units: 'metric',                   // Usar sistema métrico
+        region: 'mx',                      // Región México para mejor localización
+        traffic_model: 'best_guess',       // Modelo de tráfico más preciso
+        departure_time: 'now',             // Tiempo actual para cálculo de tráfico
+        // Modo de transporte específico para mayor precisión
+        mode: 'walking',                   // driving, walking, bicycling, transit
+        // Solicitar información detallada
+        waypoint_optimization: 'true'
+      });
+  
       const response = await axios.get(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${origenCoords.latitude},${origenCoords.longitude}&destination=${destinoCoords.latitude},${destinoCoords.longitude}&key=${GOOGLE_MAPS_API_KEY}&language=es`
+        `https://maps.googleapis.com/maps/api/directions/json?${params.toString()}`,
+        {
+          timeout: 10000, // Timeout de 10 segundos
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }
       );
-
-      if (response.data.routes.length) {
-        const route = response.data.routes[0];
-        const leg = route.legs[0];
-
-        const points = decodePolyline(route.overview_polyline.points);
-        setRutas(points);
-        setDirections({ status: 'OK' });
-
-        // Guardar información de la ruta
-        setRutaInfo({
-          distancia: leg.distance.text,
-          duracion: leg.duration.text,
-          distanciaValor: leg.distance.value,
-          duracionValor: leg.duration.value
-        });
-
-        // Guardar pasos de navegación
-        setPasos(leg.steps);
-        setPasoActual(0);
-
-
-
-        if (mapRef.current) {
-          mapRef.current.fitToCoordinates([origenCoords, ...points, destinoCoords], {
-            edgePadding: { top: 100, right: 50, bottom: 100, left: 50 },
-            animated: true,
+  
+      if (response.data.status === 'OK' && response.data.routes.length) {
+        // Seleccionar la mejor ruta (primera por defecto, pero podemos mejorar la selección)
+        let bestRoute = response.data.routes[0];
+        
+        // Si hay múltiples rutas, seleccionar la más óptima
+        if (response.data.routes.length > 1) {
+          bestRoute = response.data.routes.reduce((mejor, actual) => {
+            const duracionMejor = mejor.legs[0].duration.value;
+            const duracionActual = actual.legs[0].duration.value;
+            const distanciaMejor = mejor.legs[0].distance.value;
+            const distanciaActual = actual.legs[0].distance.value;
+            
+            // Priorizar por tiempo, luego por distancia
+            if (duracionActual < duracionMejor) return actual;
+            if (duracionActual === duracionMejor && distanciaActual < distanciaMejor) return actual;
+            return mejor;
           });
         }
+  
+        const leg = bestRoute.legs[0];
+        
+        // Validar que la ruta tenga datos necesarios
+        if (!leg || !bestRoute.overview_polyline || !bestRoute.overview_polyline.points) {
+          throw new Error('Datos de ruta incompletos');
+        }
+  
+        // Decodificar con mayor precisión
+        const points = decodePolyline(bestRoute.overview_polyline.points);
+        
+        // Validar que los puntos sean válidos
+        const validPoints = points.filter(point => 
+          point.latitude && point.longitude && 
+          !isNaN(point.latitude) && !isNaN(point.longitude) &&
+          Math.abs(point.latitude) <= 90 && Math.abs(point.longitude) <= 180
+        );
+  
+        if (validPoints.length === 0) {
+          throw new Error('Puntos de ruta inválidos');
+        }
+  
+        setRutas(validPoints);
+        setDirections({ 
+          status: 'OK',
+          // Información adicional de la respuesta
+          warnings: response.data.geocoded_waypoints?.map(wp => wp.geocoder_status) || [],
+          copyrights: response.data.copyrights || '',
+          availableRoutes: response.data.routes.length
+        });
+  
+        // Información mejorada de la ruta
+        const rutaInfoMejorada = {
+          distancia: leg.distance?.text || 'No disponible',
+          duracion: leg.duration?.text || 'No disponible',
+          distanciaValor: leg.distance?.value || 0,
+          duracionValor: leg.duration?.value || 0,
+          // Información adicional
+          duracionEnTrafico: leg.duration_in_traffic?.text || leg.duration?.text || 'No disponible',
+          duracionEnTraficoValor: leg.duration_in_traffic?.value || leg.duration?.value || 0,
+          direccionInicio: leg.start_address || 'Ubicación de origen',
+          direccionFin: leg.end_address || 'Ubicación de destino',
+          // Coordenadas precisas de inicio y fin
+          coordenadasInicio: {
+            lat: leg.start_location?.lat || origenCoords.latitude,
+            lng: leg.start_location?.lng || origenCoords.longitude
+          },
+          coordenadasFin: {
+            lat: leg.end_location?.lat || destinoCoords.latitude,
+            lng: leg.end_location?.lng || destinoCoords.longitude
+          },
+          // Información adicional de calidad
+          calidad: {
+            puntosPolyline: validPoints.length,
+            rutasAlternativas: response.data.routes.length,
+            tiempoRespuesta: Date.now()
+          }
+        };
+  
+        setRutaInfo(rutaInfoMejorada);
+  
+        // Pasos con información mejorada
+        const pasosDetallados = (leg.steps || []).map((step, index) => ({
+          ...step,
+          indice: index,
+          // Decodificar polyline de cada paso para mayor precisión
+          puntosDelPaso: step.polyline?.points ? decodePolyline(step.polyline.points) : [],
+          // Información adicional del paso
+          maniobra: step.maneuver || 'straight',
+          tipoVia: step.html_instructions ? 
+            step.html_instructions.replace(/<[^>]*>/g, '') : (step.instructions || 'Continuar'),
+          // Validación de datos del paso
+          distanciaValida: step.distance?.value > 0,
+          duracionValida: step.duration?.value > 0
+        }));
+  
+        setPasos(pasosDetallados);
+        setPasoActual(0);
+  
+        // Ajustar el mapa con padding mejorado
+        if (mapRef.current) {
+          const coordenadasParaAjuste = [
+            origenCoords, 
+            ...validPoints.slice(0, Math.min(validPoints.length, 100)), // Limitar puntos para rendimiento
+            destinoCoords
+          ];
+  
+          // Validar que todas las coordenadas sean válidas antes de ajustar
+          const coordenadasValidas = coordenadasParaAjuste.filter(coord => 
+            coord && coord.latitude && coord.longitude &&
+            !isNaN(coord.latitude) && !isNaN(coord.longitude)
+          );
+  
+          if (coordenadasValidas.length > 1) {
+            mapRef.current.fitToCoordinates(coordenadasValidas, {
+              edgePadding: { 
+                top: 120, 
+                right: 80, 
+                bottom: 200, 
+                left: 80 
+              },
+              animated: true,
+            });
+          }
+        }
+  
+        console.log('Ruta calculada exitosamente:', {
+          distancia: rutaInfoMejorada.distancia,
+          duracion: rutaInfoMejorada.duracion,
+          puntos: validPoints.length,
+          pasos: pasosDetallados.length
+        });
+  
       } else {
-        Alert.alert("Ruta no encontrada", "No se pudo encontrar una ruta a ese destino.");
+        // Manejo mejorado de errores específicos
+        let mensajeError = "No se pudo encontrar una ruta a ese destino.";
+        
+        switch (response.data.status) {
+          case 'NOT_FOUND':
+            mensajeError = "Una de las ubicaciones no pudo ser encontrada.";
+            break;
+          case 'ZERO_RESULTS':
+            mensajeError = "No hay rutas disponibles entre estos puntos.";
+            break;
+          case 'MAX_WAYPOINTS_EXCEEDED':
+            mensajeError = "Demasiados puntos de paso en la ruta.";
+            break;
+          case 'INVALID_REQUEST':
+            mensajeError = "Solicitud de ruta inválida.";
+            break;
+          case 'OVER_DAILY_LIMIT':
+          case 'OVER_QUERY_LIMIT':
+            mensajeError = "Límite de consultas excedido. Intenta más tarde.";
+            break;
+          case 'REQUEST_DENIED':
+            mensajeError = "Acceso denegado al servicio de rutas.";
+            break;
+          case 'UNKNOWN_ERROR':
+            mensajeError = "Error desconocido del servidor. Intenta nuevamente.";
+            break;
+          default:
+            mensajeError = `Error del servicio: ${response.data.status}`;
+        }
+  
+        Alert.alert("Ruta no encontrada", mensajeError);
+        
+        // Limpiar estados
         setRutas([]);
         setDirections(null);
         setPasos([]);
         setRutaInfo(null);
       }
+  
     } catch (error) {
-      console.error("Error al obtener ruta:", error);
-      Alert.alert("Error", "No se pudo calcular la ruta en este momento.");
+      console.error("Error detallado al obtener ruta:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        code: error.code,
+        config: error.config ? {
+          url: error.config.url,
+          method: error.config.method,
+          timeout: error.config.timeout
+        } : null
+      });
+  
+      // Mensaje de error más específico
+      let mensajeError = "No se pudo calcular la ruta en este momento.";
+      
+      if (error.code === 'ECONNABORTED') {
+        mensajeError = "La solicitud tardó demasiado tiempo. Intenta de nuevo.";
+      } else if (error.response?.status === 403) {
+        mensajeError = "Error de autenticación. Verifica la API key.";
+      } else if (error.response?.status === 429) {
+        mensajeError = "Demasiadas solicitudes. Espera un momento e intenta de nuevo.";
+      } else if (error.response?.status === 400) {
+        mensajeError = "Datos de ubicación inválidos.";
+      } else if (!error.response) {
+        mensajeError = "Error de conexión. Verifica tu conexión a internet.";
+      } else if (error.message === 'Coordenadas inválidas') {
+        mensajeError = "Las coordenadas proporcionadas no son válidas.";
+      } else if (error.message === 'Puntos de ruta inválidos') {
+        mensajeError = "La ruta calculada contiene puntos inválidos.";
+      }
+  
+      Alert.alert("Error", mensajeError);
+      
+      // Limpiar estados
       setRutas([]);
       setDirections(null);
       setPasos([]);

@@ -15,6 +15,8 @@ export default function Login({ navigation }) {
   const [modalTipo, setModalTipo] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const { ip_school } = require('../../constants/ip');
+
   useEffect(() => {
     if (modalTipo !== '') {
       setModalVisible(true);
@@ -33,7 +35,7 @@ export default function Login({ navigation }) {
     try {
       console.log('Intentando login con usuario:', usuario);
       
-      const response = await axios.post('http://10.13.9.76:3005/api/login', {
+      const response = await axios.post(`http://${ip_school}:3005/api/login`, {
         usuario: usuario.trim(),
         contraseña: contraseña
       });
@@ -92,7 +94,7 @@ export default function Login({ navigation }) {
     <View style={styles.container}>
       <Image source={images.logo} style={styles.logo} resizeMode="contain" />
 
-      <Text style={styles.title}>Iniciar Sesión</Text>
+      <Text style={styles.title}>Iniciar Sesion</Text>
 
       <TextInput
         style={styles.input}
@@ -119,7 +121,7 @@ export default function Login({ navigation }) {
 
       <View style={styles.buttonContainer}>
         <Boton.BotonAzulOscuroPequeno 
-          texto={loading ? "Iniciando..." : "Iniciar sesión"} 
+          texto={loading ? "Iniciando..." : "Iniciar sesion"} 
           onPress={handleLogin}
           disabled={loading}
         />

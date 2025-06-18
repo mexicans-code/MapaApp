@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import colors from '../assets/colors';
 import { Iconos } from '../assets/iconos';
+import { ip_home } from '../constants/ip';
 
 const getColorByTipo = (tipo) => {
   switch (tipo) {
@@ -69,7 +70,7 @@ export default function Historial() {
       }
 
       // Cambiar la URL para incluir el parámetro de usuario
-      const response = await fetch(`http://10.13.9.76:3008/api/historial/usuario/${idUsuario}`);
+      const response = await fetch(`http://${ip_home}:3008/api/historial/usuario/${idUsuario}`);
       console.log('Response:', response);
       
       if (!response.ok) {
@@ -117,7 +118,7 @@ export default function Historial() {
 
   const eliminarDelHistorial = async (id) => {
     try {
-      const response = await fetch(`http://10.13.9.76:3008/api/historial/${id}`, {
+      const response = await fetch(`http://${ip_home}:3008/api/historial/${id}`, {
         method: 'DELETE',
       });
       if (response.ok) {

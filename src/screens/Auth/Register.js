@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import images from '../../assets/img/images';
+import { ip_school } from '../../constants/ip';
 import { modalesContenido } from '../../modals/ContenidoModal';
 import ModalGeneral from '../../modals/ModalGeneral';
 import Boton from '../components/CustomButtons';
@@ -14,6 +15,7 @@ export default function Register({ navigation }) {
   const [origen, setOrigen] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTipo, setModalTipo] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (modalTipo !== '') {
@@ -22,50 +24,83 @@ export default function Register({ navigation }) {
   }, [modalTipo]);
 
   const registrar = async () => {
-    if (!nombre || !usuario || !contraseña || !confirmarContraseña || !origen) {
+    // Validación de campos vacíos
+    if (!nombre.trim() || !usuario.trim() || !contraseña.trim() || !confirmarContraseña.trim() || !origen.trim()) {
       setModalTipo('errorCamposVacios');
       return;
     }
   
-    if (contraseña !== confirmarContraseña) {
+    // Validación de contraseñas
+    if (contraseña !== confirmarContraseña) {   
       setModalTipo('errorContraseñaNoCoincide');
       return;
     }
+
+    // Validación de longitud de contraseña
+    if (contraseña.length < 6) {
+      setModalTipo('errorContraseñaCorta');
+      return;
+    }
+
+    setLoading(true);
   
     try {
-      console.log('Enviando registro con datos:', { nombre, usuario, contraseña, confirmarContraseña, origen });
-      
-      const response = await axios.post('http://10.13.9.76:3005/api/register', {
-        nombre,
-        usuario,
-        contraseña,
-        origen,
+      console.log('Enviando registro con datos:', { 
+        nombre: nombre.trim(), 
+        usuario: usuario.trim(), 
+        origen: origen.trim() 
       });
       
-      console.log('Respuesta completa:', response);
-      console.log('Status:', response.status);
-      console.log('Data:', response.data);
+      const response = await axios.post(`http://${ip_school}:3005/api/register`, {
+        nombre: nombre.trim(),
+        usuario: usuario.trim(),
+        contraseña: contraseña,
+        origen: origen.trim(),
+      });
+      
+      console.log('Respuesta del registro:', response.data);
   
       if (response.data.success) {
-        console.log('Usuario registrado exitosamente');
+        console.log('Usuario registrado exitosamente:', response.data.user?.nombre || nombre);
         setModalTipo('RegisterExitoso');
+        
+        // Redirigir al login después del registro exitoso
+        setTimeout(() => {
+          navigation.navigate('Login');
+        }, 2000);
+        
       } else {
         console.error('Error al registrar usuario:', response.data.message);
         setModalTipo('RegisterError');
       }
     } catch (error) {
       console.error('Error completo:', error);
-      console.error('Response error:', error.response?.data);
-      console.error('Status error:', error.response?.status);
-      setModalTipo('RegisterError');
+      
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Status:', error.response.status);
+        
+        if (error.response.status === 409) {
+          setModalTipo('UsuarioYaExiste');
+        } else if (error.response.status === 400) {
+          setModalTipo('DatosInvalidos');
+        } else {
+          setModalTipo('RegisterError');
+        }
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        setModalTipo('RegisterErrorConexion');
+      } else {
+        console.error('Request setup error:', error.message);
+        setModalTipo('RegisterError');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleModalClose = () => {
     setModalVisible(false);
-    if (modalTipo === 'RegisterExitoso') {
-      navigation.replace('Drawer');
-    }
     setModalTipo('');
   };
 
@@ -80,39 +115,61 @@ export default function Register({ navigation }) {
         placeholder="Nombre completo"
         value={nombre}
         onChangeText={setNombre}
+        autoCapitalize="words"
+        autoCorrect={false}
+        editable={!loading}
       />
+      
       <TextInput
         style={styles.input}
         placeholder="Usuario"
         value={usuario}
         onChangeText={setUsuario}
+        autoCapitalize="none"
+        autoCorrect={false}
+        editable={!loading}
       />
+      
       <TextInput
         style={styles.input}
         placeholder="Origen/Lugar"
         value={origen}
         onChangeText={setOrigen}
+        autoCapitalize="words"
+        autoCorrect={false}
+        editable={!loading}
       />
+      
       <TextInput
         style={styles.input}
-        placeholder="Contraseña"
+        placeholder="Contraseña (mínimo 6 caracteres)"
         secureTextEntry
         value={contraseña}
         onChangeText={setContraseña}
+        editable={!loading}
       />
+      
       <TextInput
         style={styles.input}
         placeholder="Confirmar contraseña"
         secureTextEntry
         value={confirmarContraseña}
         onChangeText={setConfirmarContraseña}
+        editable={!loading}
       />
 
       <View style={styles.buttonContainer}>
-        <Boton.BotonAzulOscuroPequeno texto="Registrar" onPress={registrar} />
+        <Boton.BotonAzulOscuroPequeno 
+          texto={loading ? "Registrando..." : "Registrar"} 
+          onPress={registrar}
+          disabled={loading}
+        />
       </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('Login')}
+        disabled={loading}
+      >
         <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
       </TouchableOpacity>
 
@@ -165,5 +222,6 @@ const styles = StyleSheet.create({
     color: '#007bff',
     fontSize: 16,
     textDecorationLine: 'underline',
+    textAlign: 'center',
   },
 });
