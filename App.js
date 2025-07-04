@@ -16,8 +16,13 @@ import Map from './src/screens/Map';
 import Mapa2Mejorado from './src/screens/Mapa2Mejorado';
 import Perfil from './src/screens/Perfil';
 
-
+//Dashboard routes
 import { Iconos } from './src/assets/iconos';
+import DeparamentPanel from './src/dashboard/DeparamentPanel';
+import EventPanel from './src/dashboard/EventPanel';
+import PersonalPanel from './src/dashboard/PersonalPanel';
+import PrincipalPanel from './src/dashboard/PrincipalPanel';
+import ReportPanel from './src/dashboard/ReportPanel';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -74,7 +79,12 @@ function CustomDrawerContent(props) {
         onPress={() => { props.navigation.navigate('Map2Mejorado'); props.navigation.closeDrawer(); }}
       />
 
-      {/* Línea divisoria y título: Tú */}
+      <DrawerItem
+        label="PrincipalPanel"
+        icon={({ size, color }) => <Iconos.Map size={size} color={color} />}
+        onPress={() => { props.navigation.navigate('PrincipalPanel'); props.navigation.closeDrawer(); }}
+      />
+
       <View style={styles.divider} />
       <Text style={styles.sectionTitle}>Tú</Text>
 
@@ -111,6 +121,11 @@ function DrawerNavigator() {
       <Drawer.Screen name="Map2Mejorado" component={Mapa2Mejorado} />
       <Drawer.Screen name="Register" component={Register} />
       <Drawer.Screen name="Login" component={Login} />
+      <Drawer.Screen name="PrincipalPanel" component={PrincipalPanel} />
+      <Drawer.Screen name="DeparamentPanel" component={DeparamentPanel} />
+      <Drawer.Screen name="EventPanel" component={EventPanel} />
+      <Drawer.Screen name="PersonalPanel" component={PersonalPanel} />
+      <Drawer.Screen name="ReportPanel" component={ReportPanel} />
     </Drawer.Navigator>
   );
 }

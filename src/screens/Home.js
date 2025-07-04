@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import Colores from '../assets/colors';
 import images from '../assets/img/images';
-import { ip_school } from '../constants/ip';
 import Buscador from './components/Buscador';
 
 const screenWidth = Dimensions.get('window').width;
@@ -25,7 +24,7 @@ export default function Home() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get(`http://${ip_school}:3000/events`);
+        const response = await axios.get(`https://server-zeta-ten-25.vercel.app/api/events`);
         setEvents(response.data);
         console.log('Events:', response.data);
       } catch (error) {
@@ -36,7 +35,7 @@ export default function Home() {
 
     const fetchMoreVisited = async () => {
       try {
-        const response = await axios.get(`http://${ip_school}:3000/most-visited`);
+        const response = await axios.get(`https://server-zeta-ten-25.vercel.app/api/most-visited`);
         const transformedData = response.data.map((item) => ({
           key: item.id?.toString() || item._id?.toString() || item.nombre?.toLowerCase(),
           label: item.nombre,

@@ -57,7 +57,7 @@ const Mapa2Mejorado = () => {
         language: 'es-ES',
         pitch: 1.0,
         rate: 0.8,
-        voice: 'es-ES-AlvaroNeural', // Voz masculina española, si está disponible
+        voice: 'es-ES-AlvaroNeural', 
         onDone: () => setLeyendoIndicacion(false),
         onError: () => setLeyendoIndicacion(false)
       });
@@ -268,8 +268,11 @@ const procesarIndicaciones = (route) => {
 
     const obtenerDestinos = async () => {
       try {
-        const response = await axios.get(`http://${ip_school}:3000/destinos`);
-        setDestinos(response.data);
+        const response = await axios.get(`https://server-zeta-ten-25.vercel.app/api/destinos`);
+        
+        // ✅ CORRECTO - extrae solo el array de destinos
+        setDestinos(response.data.data); // ← Nota el .data.data
+        
       } catch (error) {
         console.error('Error al obtener destinos:', error);
         Alert.alert('Error', 'No se pudieron cargar los destinos.');
