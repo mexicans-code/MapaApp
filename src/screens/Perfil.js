@@ -6,7 +6,6 @@ import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'reac
 import colors from '../assets/colors';
 import { Iconos } from '../assets/iconos';
 import images from '../assets/img/images';
-import { ip_school } from '../constants/ip';
 import CustomButtons from './components/CustomButtons';
 
 export default function Perfil({ navigation }) {
@@ -25,7 +24,7 @@ export default function Perfil({ navigation }) {
           return;
         }
 
-        const response = await axios.get(`http://${ip_school}:3000/users/${idUsuario}`);
+        const response = await axios.get(`http://192.168.100.96:3000/users/${idUsuario}`);
         const usuarioRecibido = response.data.user;
 
         setNombre(usuarioRecibido.nombre);

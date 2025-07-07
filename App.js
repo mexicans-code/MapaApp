@@ -12,80 +12,48 @@ import Welcome from './src/screens/Welcome';
 import Filtro from './src/screens/Filtro';
 import Historial from './src/screens/Historial';
 import Home from './src/screens/Home';
-import Map from './src/screens/Map';
 import Mapa2Mejorado from './src/screens/Mapa2Mejorado';
 import Perfil from './src/screens/Perfil';
 
-//Dashboard routes
 import { Iconos } from './src/assets/iconos';
-import DeparamentPanel from './src/dashboard/DeparamentPanel';
-import EventPanel from './src/dashboard/EventPanel';
-import PersonalPanel from './src/dashboard/PersonalPanel';
-import PrincipalPanel from './src/dashboard/PrincipalPanel';
-import ReportPanel from './src/dashboard/ReportPanel';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
 function CustomDrawerContent(props) {
   return (
-    <DrawerContentScrollView {...props}>
+    <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>
+      {/* Encabezado del usuario */}
+      <View style={styles.drawerHeader}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>U</Text>
+        </View>
+        <Text style={styles.userName}>Bienvenido</Text>
+        <Text style={styles.userEmail}>usuario@example.com</Text>
+      </View>
 
-      {/* Sección: Main */}
+      {/* Menú principal */}
       <DrawerItem
         label="Inicio"
         icon={({ size, color }) => <Iconos.Home size={size} color={color} />}
         onPress={() => { props.navigation.navigate('Home'); props.navigation.closeDrawer(); }}
       />
+
       <DrawerItem
-        label="Map"
-        icon={({ size, color }) => <Iconos.Map  size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
-      />
-      <DrawerItem
-        label="Map2Mejorado"
+        label="Mapa"
         icon={({ size, color }) => <Iconos.Map size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Map2Mejorado'); props.navigation.closeDrawer(); }}
+        onPress={() => { props.navigation.navigate('Mapa2Mejorado'); props.navigation.closeDrawer(); }}
       />
+
       <DrawerItem
         label="Historial"
         icon={({ size, color }) => <Iconos.Historial size={size} color={color} />}
         onPress={() => { props.navigation.navigate('Historial'); props.navigation.closeDrawer(); }}
       />
 
-      {/* Línea divisoria y título: Buscar */}
+      {/* Línea divisoria */}
       <View style={styles.divider} />
-      <Text style={styles.sectionTitle}>A donde quieres ir?</Text>
 
-      <DrawerItem
-        label="Edificio"
-        icon={({ size, color }) => <Iconos.Edificio size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
-      />
-      <DrawerItem
-        label="Área"
-        icon={({ size, color }) => <Iconos.Area size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
-      />
-      <DrawerItem
-        label="Personal"
-        icon={({ size, color }) => <Iconos.Personal size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Map'); props.navigation.closeDrawer(); }}
-      />
-
-      <DrawerItem
-        label="Map2Mejorado"
-        icon={({ size, color }) => <Iconos.Map size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('Map2Mejorado'); props.navigation.closeDrawer(); }}
-      />
-
-      <DrawerItem
-        label="PrincipalPanel"
-        icon={({ size, color }) => <Iconos.Map size={size} color={color} />}
-        onPress={() => { props.navigation.navigate('PrincipalPanel'); props.navigation.closeDrawer(); }}
-      />
-
-      <View style={styles.divider} />
       <Text style={styles.sectionTitle}>Tú</Text>
 
       <DrawerItem
@@ -93,6 +61,7 @@ function CustomDrawerContent(props) {
         icon={({ size, color }) => <Iconos.Perfil size={size} color={color} />}
         onPress={() => { props.navigation.navigate('Perfil'); props.navigation.closeDrawer(); }}
       />
+
       <DrawerItem
         label="Cerrar sesión"
         icon={({ size, color }) => <Iconos.CerrarSesion size={size} color={color} />}
@@ -102,49 +71,72 @@ function CustomDrawerContent(props) {
   );
 }
 
+
 function DrawerNavigator() {
   return (
     <Drawer.Navigator
-      drawerContent={props => <CustomDrawerContent {...props} />}
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
-        drawerStyle: { width: '90%' },
+        drawerStyle: { width: '85%' },
         headerShown: true,
         headerTitleAlign: 'center',
         headerTitle: '',
       }}
     >
       <Drawer.Screen name="Home" component={Home} />
-      <Drawer.Screen name="Map" component={Map} />
       <Drawer.Screen name="Historial" component={Historial} />
       <Drawer.Screen name="Filtro" component={Filtro} />
       <Drawer.Screen name="Perfil" component={Perfil} />
-      <Drawer.Screen name="Map2Mejorado" component={Mapa2Mejorado} />
-      <Drawer.Screen name="Register" component={Register} />
-      <Drawer.Screen name="Login" component={Login} />
-      <Drawer.Screen name="PrincipalPanel" component={PrincipalPanel} />
-      <Drawer.Screen name="DeparamentPanel" component={DeparamentPanel} />
-      <Drawer.Screen name="EventPanel" component={EventPanel} />
-      <Drawer.Screen name="PersonalPanel" component={PersonalPanel} />
-      <Drawer.Screen name="ReportPanel" component={ReportPanel} />
+      <Drawer.Screen name="Mapa2Mejorado" component={Mapa2Mejorado} />
     </Drawer.Navigator>
   );
 }
 
 const styles = StyleSheet.create({
+  drawerHeader: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#1976D2',
+    marginBottom: 10,
+  },
+  avatarContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatarText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1976D2',
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  userEmail: {
+    fontSize: 13,
+    color: '#e0e0e0',
+  },
   divider: {
     height: 1,
     backgroundColor: '#ccc',
     marginVertical: 10,
-    marginHorizontal: 10,
+    marginHorizontal: 15,
   },
   sectionTitle: {
-    marginLeft: 15,
+    marginLeft: 20,
     marginBottom: 5,
-    fontWeight: 'bold',
-    color: '#444',
+    fontWeight: '600',
     fontSize: 14,
+    color: '#555',
   },
 });
+
 
 export default function App() {
   return (

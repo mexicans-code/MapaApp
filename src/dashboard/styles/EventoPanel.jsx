@@ -242,6 +242,7 @@ const styles = StyleSheet.create({
     formGroup: {
         marginBottom: 20,
     },
+
     formRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -302,6 +303,79 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    selectContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 10,
+    },
+
+    selectButton: {
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#f5f5f5',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    selectButtonActive: {
+        backgroundColor: '#1565C0',
+        borderColor: '#1565C0',
+    },
+
+    selectButtonText: {
+        fontSize: 14,
+        color: '#666',
+        fontWeight: '500',
+    },
+
+    selectButtonTextActive: {
+        color: '#fff',
+        fontWeight: '600',
+    },
+
+    pickerContainer: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        backgroundColor: '#fff',
+        marginBottom: 8,
+    },
+    picker: {
+        height: 50,
+        width: '100%',
+    },
+
+    radioGroup: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 8
+    },
+    radioOption: {
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        alignItems: 'center',
+        marginHorizontal: 5,
+        backgroundColor: '#f9f9f9'
+    },
+    radioSelected: {
+        backgroundColor: '#E3F2FD',
+        borderColor: '#1565C0'
+    },
+    radioText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#333'
+    },
+
+
 });
 
 export default styles;

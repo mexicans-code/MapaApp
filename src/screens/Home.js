@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import {
@@ -5,221 +6,217 @@ import {
   Dimensions,
   FlatList,
   Image,
+  RefreshControl,
   ScrollView,
-  StyleSheet,
+  StatusBar,
   Text,
+  TouchableOpacity,
   View
 } from 'react-native';
-import Colores from '../assets/colors';
 import images from '../assets/img/images';
-import Buscador from './components/Buscador';
+import styles from './components/styles/Home';
 
 const screenWidth = Dimensions.get('window').width;
-
+const ip_home = '192.168.100.96';
 
 export default function Home() {
+  const navigation = useNavigation();
   const [events, setEvents] = useState([]);
   const [moreVisited, setMoreVisited] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await axios.get(`https://server-zeta-ten-25.vercel.app/api/events`);
-        setEvents(response.data);
-        console.log('Events:', response.data);
-      } catch (error) {
-        console.error('Error al obtener eventos:', error);
-        Alert.alert('Error', 'No se pudo cargar la lista de eventos');
-      }
-    };
-
-    const fetchMoreVisited = async () => {
-      try {
-        const response = await axios.get(`https://server-zeta-ten-25.vercel.app/api/most-visited`);
-        const transformedData = response.data.map((item) => ({
-          key: item.id?.toString() || item._id?.toString() || item.nombre?.toLowerCase(),
-          label: item.nombre,
-          img: item.imagen ? { uri: item.imagen } : images.imagen
-        }));
-        setMoreVisited(transformedData);
-        console.log('More Visited:', transformedData);
-      } catch (error) {
-        console.error('Error al obtener mas visitados:', error);
-        Alert.alert('Error', 'No se pudo cargar la lista de mas visitados');
-      }
-    };
-
     fetchEvents();
     fetchMoreVisited();
   }, []);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([fetchEvents(), fetchMoreVisited()]);
+    setRefreshing(false);
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get(`http://${ip_home}:3000/api/events`);
+      const activeEvents = (response.data.data || []).filter(event => event.estado === 'activo');
+      console.log('Total de eventos recibidos:', response.data.data?.length || 0);
+      console.log('Total de eventos activos:', activeEvents.length);
+      setEvents(activeEvents);
+    } catch (error) {
+      console.error('Error al obtener eventos:', error);
+      Alert.alert('Error', 'No se pudo cargar la lista de eventos');
+    }
+  };
+
+  const fetchMoreVisited = async () => {
+    try {
+      const response = await axios.get(`http://${ip_home}:3000/api/most-visited`);
+      const transformedData = response.data.map((item) => ({
+        key: item.id?.toString() || item._id?.toString() || item.nombre?.toLowerCase(),
+        label: item.nombre,
+        img: item.imagen ? { uri: item.imagen } : images.imagen
+      }));
+      setMoreVisited(transformedData);
+      console.log('More Visited:', transformedData);
+    } catch (error) {
+      console.error('Error al obtener mas visitados:', error);
+      Alert.alert('Error', 'No se pudo cargar la lista de mas visitados');
+    }
+  };
+
+  // Función para navegar al mapa con el evento seleccionado
+  const navigateToEventLocation = (event) => {
+    // Validar que el evento tenga coordenadas
+    if (!event.latitude || !event.longitude) {
+      Alert.alert('Error', 'Este evento no tiene ubicación definida');
+      return;
+    }
+
+    const eventCoords = {
+      latitude: parseFloat(event.latitude),
+      longitude: parseFloat(event.longitude)
+    };
+
+    // Navegar al mapa pasando los datos del evento
+    navigation.navigate('Mapa2Mejorado', { 
+      eventData: event,
+      destinoCoords: eventCoords,
+      navigateToEvent: true 
+    });
+  };
+
+  const getCategoryIcon = (categoria) => {
+    switch (categoria) {
+      case 'Académico': return '🎓';
+      case 'Deportivo': return '⚽';
+      case 'Cultural': return '🎭';
+      case 'Ceremonial': return '🎉';
+      case 'Social': return '👥';
+      default: return '📅';
+    }
+  };
+
+  const formatDate = (fecha) => {
+    try {
+      const date = new Date(fecha);
+      return date.toLocaleDateString('es-MX', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return fecha;
+    }
+  };
+
+  const formatTime = (hora) => {
+    try {
+      return hora;
+    } catch (error) {
+      return hora;
+    }
+  };
+
   const renderVisitedItem = ({ item }) => (
-    <View style={styles.visitedItem}>
+    <TouchableOpacity style={styles.visitedItem} activeOpacity={0.7}>
       <Image source={item.img} style={styles.visitedImage} />
       <View style={styles.labelOverImage}>
         <Text style={styles.visitedText}>{item.label}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
-
-  const handleSearchChange = (text) => {
-    console.log('Buscar:', text);
-  };
-
-  const handlePressFiltro = () => {
-    console.log('Filtro presionado');
-  };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.sectionTitle}>A donde quieres ir?</Text>
-      <Buscador 
-        placeholder="Buscar"
-        onChangeText={handleSearchChange}
-        onPressFiltro={handlePressFiltro}
-      />
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#1565C0" barStyle="light-content" />
+      
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1565C0']} />
+        }
+      >
+        <View style={styles.titleContainer}>
+          <Text style={styles.mainTitle}>Bienvenido 🎓 </Text>
+        </View>
 
-      <Text style={styles.sectionTitle}>Más visitados</Text>
-      <FlatList
-        data={moreVisited}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.key}
-        renderItem={renderVisitedItem}
-        contentContainerStyle={styles.visitedListContainer}
-      />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Más visitados</Text>
+          <FlatList
+            data={moreVisited}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.key}
+            renderItem={renderVisitedItem}
+            contentContainerStyle={styles.visitedListContainer}
+          />
+        </View>
 
-      <Text style={styles.sectionTitle}>Eventos</Text>
-      {events.map((event) => {
-        const eventDate = new Date(event.fecha);
-        const formattedDate = eventDate.toLocaleDateString('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        });
-        const formattedTime = eventDate.toLocaleTimeString('es-ES', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-
-        return (
-          <View key={event.id || event._id} style={styles.eventDateSection}>
-            <Text style={styles.eventDate}>{formattedDate}</Text>
-            <View style={styles.eventItem}>
-              <View style={styles.eventInfo}>
-                <Text style={styles.eventTitle}>{event.nombre}</Text>
-                <Text style={styles.eventDetail}>📅 {formattedDate}</Text>
-                <Text style={styles.eventDetail}>🕐 {formattedTime}</Text>
-                <Text style={styles.eventDetail}>📍 {event.lugar}</Text>
-              </View>
-              <Image 
-                source={{uri: event.imagen}} 
-                style={styles.eventImage} 
-              />
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Eventos disponibles</Text>
+          {events.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No hay eventos disponibles</Text>
             </View>
-          </View>
-        );
-      })}
-    </ScrollView>
+          ) : (
+            events.map((event) => {
+              const formattedDate = formatDate(event.fecha);
+              const formattedTime = formatTime(event.hora);
+
+              return (
+                <TouchableOpacity 
+                  key={event.id || event._id} 
+                  style={styles.eventCard}
+                  activeOpacity={0.8}
+                  onPress={() => navigateToEventLocation(event)}
+                >
+                  <View style={styles.eventContent}>
+                    <View style={styles.eventHeader}>
+                      <Text style={styles.eventDate}>{formattedDate}</Text>
+                      <Text style={styles.categoryIcon}>{getCategoryIcon(event.categoria)}</Text>
+                    </View>
+                    
+                    <View style={styles.eventBody}>
+                      <View style={styles.eventInfo}>
+                        <Text style={styles.eventTitle}>{event.titulo}</Text>
+                        <Text style={styles.eventDescription} numberOfLines={2}>
+                          {event.descripcion}
+                        </Text>
+                        
+                        <View style={styles.eventDetails}>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailIcon}>🕐</Text>
+                            <Text style={styles.detailText}>{formattedTime}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailIcon}>📍</Text>
+                            <Text style={styles.detailText}>{event.ubicacion}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailIcon}>👨‍💼</Text>
+                            <Text style={styles.detailText}>{event.organizador}</Text>
+                          </View>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.eventImageContainer}>
+                        <Image 
+                          source={event.imagen ? {uri: event.imagen} : images.imagen} 
+                          style={styles.eventImage} 
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
+
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+    </View>
   );
 }
-
-const ITEM_WIDTH = screenWidth * 0.65;
-const ITEM_HEIGHT = 190;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colores.blanco,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginVertical: 8,
-    color: '#444', // gris suave para no saturar
-  },
-  visitedListContainer: {
-    paddingLeft: 12,
-    paddingBottom: 20,
-  },
-  visitedItem: {
-    width: ITEM_WIDTH,
-    height: ITEM_HEIGHT,
-    marginRight: 18,
-    borderRadius: 14,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-    // sombra suave para elevar las tarjetas
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  visitedImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 14,
-  },
-  labelOverImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  visitedText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  eventDateSection: {
-    marginBottom: 32,
-  },
-  eventDate: {
-    fontWeight: '600',
-    fontSize: 15,
-    color: '#555',
-    marginBottom: 10,
-  },
-  eventItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 12,
-    // sombra ligera
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  eventInfo: {
-    flex: 1,
-    marginRight: 14,
-  },
-  eventTitle: {
-    fontWeight: '700',
-    fontSize: 15,
-    marginBottom: 3,
-    color: '#333',
-  },
-  eventDetail: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
-  },
-  eventImage: {
-    width: 70,
-    height: 50,
-    borderRadius: 10,
-  },
-});

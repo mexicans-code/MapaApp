@@ -9,6 +9,8 @@ const PrincipalPanel = ({ nombre = "Usuario" }) => {
     const navigation = useNavigation();
     const [count, setCount] = useState(0);
     const [count2, setCount2] = useState(0);
+    const [count3, setCount3] = useState(0);
+    const [count4, setCount4] = useState(0);
 
     const fetchStudents = async () => {
         try {
@@ -24,7 +26,7 @@ const PrincipalPanel = ({ nombre = "Usuario" }) => {
 
     const fetchDepartments = async () => {
         try {
-            const response = await fetch('https://server-zeta-ten-25.vercel.app/api/destinos');
+            const response = await fetch('http://192.168.100.96:3000/api/destinos');
             const data = await response.json();
             setCount2(data.count);
             console.log(data.count);
@@ -34,14 +36,42 @@ const PrincipalPanel = ({ nombre = "Usuario" }) => {
         }
     };
 
+    const fetchEvents = async () => {
+        try {
+            const response = await fetch('http://192.168.100.96:3000/api/events');
+            const data = await response.json();
+            setCount3(data.count);
+            console.log(data.count);
+            console.log(data);
+        } catch (error) {
+            console.error('Error al obtener los eventos:', error);
+        }
+    };
+
+    const fetchPersonal = async () => {
+        try {
+            const response = await fetch('http://192.168.100.96:3000/api/personal');
+            const data = await response.json();
+            setCount4(data.count);
+            console.log(data.count);
+            console.log(data);
+        } catch (error) {
+            console.error('Error al obtener los personal:', error);
+        }
+    };
+
     useEffect(() => {
         fetchStudents();
         fetchDepartments();
+        fetchEvents();
+        fetchPersonal();
     }, []);
+
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <StatusBar backgroundColor="#1565C0" barStyle="light-content" />
 
+            {/* Header Section */}
             <View style={styles.header}>
                 <View style={styles.headerContent}>
                     <View style={styles.headerLeft}>
@@ -62,44 +92,67 @@ const PrincipalPanel = ({ nombre = "Usuario" }) => {
                 </View>
             </View>
 
-            <View style={styles.statsSection}>
-                <View style={styles.statsCard}>
-                    <View style={styles.statsIconContainer}>
-                        <Text style={styles.statsIcon}>👥</Text>
+            {/* Spacing after header */}
+            <View style={{ height: 25 }} />
+
+            {/* Statistics Section */}
+            <View style={{ paddingHorizontal: 20 }}>
+                <Text style={{
+                    fontSize: 20,
+                    fontWeight: 'bold',
+                    color: '#1565C0',
+                    marginBottom: 15,
+                    textAlign: 'center'
+                }}>Estadísticas Generales</Text>
+
+                <View style={styles.statsSection}>
+                    <View style={styles.statsCard}>
+                        <View style={styles.statsIconContainer}>
+                            <Text style={styles.statsIcon}>👥</Text>
+                        </View>
+                        <View style={styles.statsContent}>
+                            <Text style={styles.statsNumber}>{count}</Text>
+                            <Text style={styles.statsLabel}>Estudiantes</Text>
+                            <Text style={styles.statsSubLabel}>Activos</Text>
+                        </View>
                     </View>
-                    <View style={styles.statsContent}>
-                        <Text style={styles.statsNumber}>{count}</Text>
-                        <Text style={styles.statsLabel}>Estudiantes</Text>
-                        <Text style={styles.statsSubLabel}>Activos</Text>
+
+                    <View style={styles.statsCard}>
+                        <View style={styles.statsIconContainer}>
+                            <Text style={styles.statsIcon}>🎓</Text>
+                        </View>
+                        <View style={styles.statsContent}>
+                            <Text style={styles.statsNumber}>{count4}</Text>
+                            <Text style={styles.statsLabel}>Docentes</Text>
+                        </View>
                     </View>
                 </View>
 
-                <View style={styles.statsCard}>
-                    <View style={styles.statsIconContainer}>
-                        <Text style={styles.statsIcon}>🎓</Text>
-                    </View>
-                    <View style={styles.statsContent}>
-                        <Text style={styles.statsNumber}>147</Text>
-                        <Text style={styles.statsLabel}>Docentes</Text>
+                <View style={{ height: 18 }} />
+
+                <View style={styles.statsSection}>
+                    <View style={[styles.statsCard, styles.fullWidthCard]}>
+                        <View style={styles.statsIconContainer}>
+                            <Text style={styles.statsIcon}>📚</Text>
+                        </View>
+                        <View style={styles.statsContent}>
+                            <Text style={styles.statsNumber}>{count2}</Text>
+                            <Text style={styles.statsLabel}>Destinos</Text>
+                        </View>
                     </View>
                 </View>
             </View>
 
-            <View style={styles.statsSection}>
-                <View style={[styles.statsCard, styles.fullWidthCard]}>
-                    <View style={styles.statsIconContainer}>
-                        <Text style={styles.statsIcon}>📚</Text>
-                    </View>
-                    <View style={styles.statsContent}>
-                        <Text style={styles.statsNumber}>{count2}</Text>
-                        <Text style={styles.statsLabel}>Departamentos</Text>
-                    </View>
-                </View>
-            </View>
+            <View style={{ height: 35 }} />
 
-            {/* Action Buttons */}
             <View style={styles.actionsSection}>
-                <Text style={styles.sectionTitle}>Módulos del Sistema</Text>
+                <Text style={{
+                    fontSize: 20,
+                    fontWeight: 'bold',
+                    color: '#1565C0',
+                    marginBottom: 20,
+                    textAlign: 'center'
+                }}>Módulos del Sistema</Text>
 
                 <View style={styles.buttonGrid}>
                     <TouchableOpacity style={styles.actionButton} onPress={() => { navigation.navigate('DeparamentPanel'); }}>
@@ -117,7 +170,7 @@ const PrincipalPanel = ({ nombre = "Usuario" }) => {
                         <View style={styles.buttonHeader}>
                             <Text style={styles.buttonIcon}>👨‍🏫</Text>
                             <View style={styles.buttonBadge}>
-                                <Text style={styles.badgeText}>147</Text>
+                                <Text style={styles.badgeText}>{count4}</Text>
                             </View>
                         </View>
                         <Text style={styles.buttonTitle}>Personal Académico</Text>
@@ -125,18 +178,22 @@ const PrincipalPanel = ({ nombre = "Usuario" }) => {
                     </TouchableOpacity>
                 </View>
 
+                <View style={{ height: 25 }} />
+
                 <View style={styles.buttonGrid}>
                     <TouchableOpacity style={[styles.actionButton, styles.fullWidthButton]} onPress={() => { navigation.navigate('EventPanel'); }}>
                         <View style={styles.buttonHeader}>
                             <Text style={styles.buttonIcon}>📋</Text>
                             <View style={styles.buttonBadge}>
-                                <Text style={styles.badgeText}>23</Text>
+                                <Text style={styles.badgeText}>{count3}</Text>
                             </View>
                         </View>
                         <Text style={styles.buttonTitle}>Eventos Institucionales</Text>
                         <Text style={styles.buttonDescription}>Gestión de actividades universitarias</Text>
                     </TouchableOpacity>
                 </View>
+
+                <View style={{ height: 25 }} />
 
                 <View style={styles.buttonGrid}>
                     <TouchableOpacity style={[styles.actionButton, styles.fullWidthButton]} onPress={() => { navigation.navigate('ReportPanel'); }}>
@@ -149,7 +206,7 @@ const PrincipalPanel = ({ nombre = "Usuario" }) => {
                 </View>
             </View>
 
-            <View style={styles.bottomSpacing} />
+            <View style={{ height: 50 }} />
         </ScrollView>
     );
 };

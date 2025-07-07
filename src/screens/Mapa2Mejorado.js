@@ -1,12 +1,15 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRoute } from '@react-navigation/native';
 import axios from 'axios';
+
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, Keyboard, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { styles } from '../styles/MapStyle';
+
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyCqvSzatNc9OiOYk6HL-GbThk0GI-rP2Oc";
 
@@ -30,12 +33,46 @@ const Mapa2Mejorado = () => {
   const [destinosFiltrados, setDestinosFiltrados] = useState([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   
-  // Estados para indicaciones
   const [indicaciones, setIndicaciones] = useState([]);
   const [mostrarIndicaciones, setMostrarIndicaciones] = useState(false);
   const [vozActivada, setVozActivada] = useState(true);
   const [indicacionActual, setIndicacionActual] = useState(0);
   const [leyendoIndicacion, setLeyendoIndicacion] = useState(false);
+
+  const route = useRoute();
+
+  const {eventData, destinoCoords, navigateToEvent} = route.params || {};
+
+  useEffect(() => {
+    if (navigateToEvent && destinoCoords) {
+      handleEventNavigation(eventData, destinoCoords);
+    }
+  }, [navigateToEvent, destinoCoords, eventData]);
+
+
+  const handleEventNavigation = async (event, coords) => {
+    try {
+      console.log('Navegando al evento:', event.titulo);
+      console.log('Coordenadas destino:', coords);
+      
+      if (!coords.latitude || !coords.longitude) {
+        Alert.alert('Error', 'Coordenadas del evento no válidas');
+        return;
+      }
+
+      await obtenerRutaPorCalles(coords);
+      
+      Alert.alert(
+        'Navegando a evento',
+        `Calculando ruta hacia: ${event.titulo}\nUbicación: ${event.ubicacion}`,
+        [{ text: 'OK' }]
+      );
+      
+    } catch (error) {
+      console.error('Error al navegar al evento:', error);
+      Alert.alert('Error', 'No se pudo calcular la ruta al evento');
+    }
+  };
   
   const mapRef = useRef(null);
 
@@ -43,7 +80,6 @@ const Mapa2Mejorado = () => {
     setMapType(mapType === 'standard' ? 'satellite' : 'standard');
   };
 
-  // Función para leer indicación con voz
   const leerIndicacion = async (texto, indice = null) => {
     if (!vozActivada) return;
     
@@ -67,14 +103,11 @@ const Mapa2Mejorado = () => {
     }
   };
 
-// Función para procesar indicaciones de la ruta
 const procesarIndicaciones = (route) => {
   if (!route || !route.legs || route.legs.length === 0) return [];
 
-  // Función para traducir las instrucciones al español
   const traducirInstruccion = (instruccion) => {
     const traducciones = {
-      // Direcciones básicas
       'turn left': 'gira a la izquierda',
       'turn right': 'gira a la derecha',
       'turn slight left': 'gira ligeramente a la izquierda',
@@ -88,7 +121,6 @@ const procesarIndicaciones = (route) => {
       'head': 'dirígete',
       'merge': 'incorpórate',
       
-      // Autopistas y carreteras
       'take the ramp': 'toma la rampa',
       'take exit': 'toma la salida',
       'enter the roundabout': 'entra en la rotonda',
@@ -123,7 +155,6 @@ const procesarIndicaciones = (route) => {
       'destination will be en the right': 'tu destino estará a la derecha',
 
       
-      // Tipos de vías
       'highway': 'autopista',
       'freeway': 'autopista',
       'road': 'carretera',
@@ -135,7 +166,6 @@ const procesarIndicaciones = (route) => {
       'way': 'camino',
       'route': 'ruta',
       
-      // Preposiciones y conectores
       'and': 'y',
       'then': 'luego',
       'after': 'después de',
@@ -194,7 +224,6 @@ const procesarIndicaciones = (route) => {
   return indicacionesProcesadas;
 };
 
-  // Función para determinar el tipo de destino
   const determinarTipoDestino = (nombre) => {
     const nombreLower = nombre.toLowerCase();
     
@@ -219,7 +248,6 @@ const procesarIndicaciones = (route) => {
     }
   };
 
-  // Función para guardar en historial
   const guardarEnHistorial = async (destinoData) => {
     try {
       const fechaActual = new Date();
@@ -236,7 +264,7 @@ const procesarIndicaciones = (route) => {
         userId: await AsyncStorage.getItem('id_user')
       };
 
-      const response = await axios.post(`http://${ip_school}:3008/api/historial`, historialItem);
+      const response = await axios.post(`http://${ip_home}:3000/api/historial`, historialItem);
 
       if (response.data.success) {
         console.log('Destino guardado en historial exitosamente');
@@ -261,20 +289,17 @@ const procesarIndicaciones = (route) => {
         const { latitude, longitude } = location.coords;
         setOrigen({ latitude, longitude });
       } catch (error) {
-        console.error('Error al obtener ubicación:', error);
         Alert.alert('Error', 'No se pudo obtener tu ubicación actual.');
       }
     };
 
     const obtenerDestinos = async () => {
       try {
-        const response = await axios.get(`https://server-zeta-ten-25.vercel.app/api/destinos`);
+        const response = await axios.get(`http://${ip_home}:3000/api/destinos`);
         
-        // ✅ CORRECTO - extrae solo el array de destinos
-        setDestinos(response.data.data); // ← Nota el .data.data
+        setDestinos(response.data.data); 
         
       } catch (error) {
-        console.error('Error al obtener destinos:', error);
         Alert.alert('Error', 'No se pudieron cargar los destinos.');
       }
     };
@@ -309,23 +334,19 @@ const procesarIndicaciones = (route) => {
 
     const distancia = calcularDistancia(origen, destinoCoords);
 
-    // Siempre intentar obtener ruta por calles primero
     await obtenerRutaPorCalles(destinoCoords, distancia);
   };
 
+
   const obtenerRutaPorCalles = async (destinoCoords, distanciaDirecta = null) => {
-    // Si no se proporciona distancia directa, calcularla
     if (!distanciaDirecta) {
       distanciaDirecta = calcularDistancia(origen, destinoCoords);
     }
-
-    // Para distancias muy cortas (menos de 100m), usar ruta directa
     if (distanciaDirecta < 100) {
       const rutaDirecta = [origen, destinoCoords];
       setRutas(rutaDirecta);
       setDestinoSeleccionado(destinoCoords);
       
-      // Indicaciones simples para ruta directa
       const indicacionesSimples = [{
         id: '0',
         instruccion: `Dirígete directamente hacia tu destino`,
@@ -342,7 +363,6 @@ const procesarIndicaciones = (route) => {
         });
       }
       
-      // Leer primera indicación
       if (vozActivada) {
         leerIndicacion(`Ruta calculada. ${indicacionesSimples[0].instruccion}. Distancia: ${indicacionesSimples[0].distancia}`);
       }
@@ -350,13 +370,12 @@ const procesarIndicaciones = (route) => {
       return;
     }
 
-    // Para distancias mayores, intentar ruta por calles
     let url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origen.latitude},${origen.longitude}&destination=${destinoCoords.latitude},${destinoCoords.longitude}&mode=walking&key=${GOOGLE_MAPS_API_KEY}`;
 
     try {
       let response = await axios.get(url);
       
-      // Si no funciona caminando, intentar en auto
+
       if (response.data.status !== 'OK' || response.data.routes.length === 0) {
         url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origen.latitude},${origen.longitude}&destination=${destinoCoords.latitude},${destinoCoords.longitude}&mode=driving&key=${GOOGLE_MAPS_API_KEY}`;
         response = await axios.get(url);
@@ -370,11 +389,9 @@ const procesarIndicaciones = (route) => {
         setRutas(puntosRuta);
         setDestinoSeleccionado(destinoCoords);
         
-        // Procesar indicaciones detalladas
         const indicacionesDetalladas = procesarIndicaciones(route);
         setIndicaciones(indicacionesDetalladas);
         
-        // Leer primera indicación automáticamente
         if (vozActivada && indicacionesDetalladas.length > 0) {
           const leg = route.legs[0];
           const distancia = leg.distance.text;
@@ -390,17 +407,13 @@ const procesarIndicaciones = (route) => {
           });
         }
       } else {
-        // Si falla la API, usar ruta directa como fallback
         usarRutaDirecta(destinoCoords, distanciaDirecta);
       }
     } catch (error) {
-      console.error('Error al obtener ruta:', error);
-      // Si hay error, usar ruta directa como fallback
       usarRutaDirecta(destinoCoords, distanciaDirecta);
     }
   };
 
-  // Función auxiliar para usar ruta directa como fallback
   const usarRutaDirecta = (destinoCoords, distancia) => {
     const rutaDirecta = [origen, destinoCoords];
     setRutas(rutaDirecta);
@@ -504,7 +517,6 @@ const procesarIndicaciones = (route) => {
     Keyboard.dismiss();
   };
 
-  // Función para obtener el icono según el tipo de destino
   const obtenerIconoDestino = (nombre) => {
     const nombreLower = nombre.toLowerCase();
     
@@ -529,7 +541,6 @@ const procesarIndicaciones = (route) => {
     }
   };
 
-  // Componente personalizado para marcador con icono
   const MarkerPersonalizado = ({ coordinate, title, onPress, isSelected, iconName }) => (
     <Marker
       coordinate={coordinate}
@@ -549,7 +560,6 @@ const procesarIndicaciones = (route) => {
     </Marker>
   );
 
-  // Componente Modal de Indicaciones
   const ModalIndicaciones = () => (
     <Modal
       visible={mostrarIndicaciones}
@@ -637,12 +647,10 @@ const procesarIndicaciones = (route) => {
 
   return (
     <View style={styles.container}>
-      {/* Botón hamburguesa (opcional) */}
-      <TouchableOpacity style={styles.menuButton}>
+      {/* <TouchableOpacity style={styles.menuButton}>
         <MaterialIcons name="menu" size={24} color="#5F6368" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
-      {/* Barra de búsqueda estilo Google Maps */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <MaterialIcons name="search" size={22} color="#9AA0A6" style={styles.searchIcon} />
@@ -662,7 +670,6 @@ const procesarIndicaciones = (route) => {
         </View>
       </View>
 
-      {/* Botones de control del mapa */}
       <View style={styles.mapControlsContainer}>
         <TouchableOpacity style={styles.mapControlButton} onPress={cambiarTipoMapa}>
           <MaterialIcons
@@ -672,7 +679,6 @@ const procesarIndicaciones = (route) => {
           />
         </TouchableOpacity>
         
-        {/* Botón de indicaciones */}
         {indicaciones.length > 0 && (
           <TouchableOpacity
             style={[styles.mapControlButton, styles.indicacionesButton]}
@@ -683,7 +689,6 @@ const procesarIndicaciones = (route) => {
         )}
       </View>
 
-      {/* Lista de sugerencias */}
       {mostrarSugerencias && (
         <View style={styles.suggestionsContainer}>
           <FlatList
@@ -725,7 +730,6 @@ const procesarIndicaciones = (route) => {
         initialRegion={UTEQ_COORDS}
         onPress={limpiarRuta}
       >
-        {/* Marcador de ubicación actual */}
         {origen && (
           <Marker
             coordinate={origen}
@@ -739,7 +743,6 @@ const procesarIndicaciones = (route) => {
 
         )}
 
-        {/* Marcadores de destinos */}
         {destinos.map((destino) => (
           <MarkerPersonalizado
             key={destino.id}
@@ -756,7 +759,6 @@ const procesarIndicaciones = (route) => {
           />
         ))}
 
-        {/* Polyline de la ruta */}
         {rutas.length > 0 && (
           <Polyline
             coordinates={rutas}
@@ -767,7 +769,6 @@ const procesarIndicaciones = (route) => {
           />
         )}
 
-        {/* Marcador del destino seleccionado */}
         {destinoSeleccionado && (
           <Marker
             coordinate={destinoSeleccionado}
@@ -780,7 +781,6 @@ const procesarIndicaciones = (route) => {
         )}
       </MapView>
 
-      {/* Botón de limpiar ruta */}
       {rutas.length > 0 && (
         <TouchableOpacity style={styles.clearRouteButton} onPress={limpiarRuta}>
           <MaterialIcons name="close" size={20} color="#FFFFFF" />
@@ -788,7 +788,6 @@ const procesarIndicaciones = (route) => {
         </TouchableOpacity>
       )}
 
-      {/* Botón de mi ubicación */}
       <TouchableOpacity
         style={styles.myLocationButton}
         onPress={() => {
@@ -805,7 +804,6 @@ const procesarIndicaciones = (route) => {
         <MaterialIcons name="my-location" size={24} color="#5F6368" />
       </TouchableOpacity>
 
-      {/* Información de la ruta */}
       {rutas.length > 0 && indicaciones.length > 0 && (
         <View style={styles.routeInfoContainer}>
           <View style={styles.routeInfoContent}>
@@ -828,10 +826,8 @@ const procesarIndicaciones = (route) => {
         </View>
       )}
 
-      {/* Modal de Indicaciones */}
       <ModalIndicaciones />
 
-      {/* Indicador de carga/reproducción de voz */}
       {leyendoIndicacion && (
         <View style={styles.speechIndicator}>
           <MaterialIcons name="volume-up" size={20} color="#4285F4" />

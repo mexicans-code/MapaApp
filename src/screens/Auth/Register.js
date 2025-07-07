@@ -2,7 +2,6 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import images from '../../assets/img/images';
-import { ip_school } from '../../constants/ip';
 import { modalesContenido } from '../../modals/ContenidoModal';
 import ModalGeneral from '../../modals/ModalGeneral';
 import Boton from '../components/CustomButtons';
@@ -51,7 +50,7 @@ export default function Register({ navigation }) {
         origen: origen.trim() 
       });
       
-      const response = await axios.post(`http://${ip_school}:3005/api/register`, {
+      const response = await axios.post(`http://192.168.100.96:3000/api/auth/register`, {
         nombre: nombre.trim(),
         usuario: usuario.trim(),
         contraseña: contraseña,

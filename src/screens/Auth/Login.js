@@ -35,9 +35,9 @@ export default function Login({ navigation }) {
     try {
       console.log('Intentando login con usuario:', usuario);
       
-      const response = await axios.post(`http://${ip_school}:3005/api/login`, {
+      const response = await axios.post(`http://192.168.100.96:3000/api/auth/login`, {
         usuario: usuario.trim(),
-        contraseña: contraseña
+        contraseña: contraseña.trim()
       });
 
       console.log('Respuesta del login:', response.data);
